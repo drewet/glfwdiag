@@ -1,0 +1,18 @@
+
+#include "resource.h"
+
+IDI_GLFWDIAG            ICON            "glfwdiag.ico"
+
+IDC_MAIN MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "Save &As...",         IDM_SAVEAS
+        MENUITEM "E&xit",               IDM_EXIT
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About...",           IDM_ABOUT
+    END
+END
+
