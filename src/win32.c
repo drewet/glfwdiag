@@ -200,7 +200,7 @@ static int create_main_window(int show)
                                 L"EDIT",
                                 L"",
                                 WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | WS_CHILD |
-                                    ES_AUTOVSCROLL | ES_MULTILINE,
+                                    ES_AUTOVSCROLL | ES_MULTILINE | ES_READONLY,
                                 0, 0, client.right, client.bottom,
                                 state.window, NULL, state.instance, NULL);
     if (!state.edit)
