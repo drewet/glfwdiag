@@ -11,6 +11,12 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "E&xit",               IDM_EXIT
     END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Copy",               IDM_COPY
+        MENUITEM SEPARATOR
+        MENUITEM "Select &all",         IDM_SELECTALL
+    END
     POPUP "&Help"
     BEGIN
         MENUITEM "&About...",           IDM_ABOUT

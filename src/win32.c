@@ -126,6 +126,18 @@ static void handle_menu_command(int command)
             break;
         }
 
+        case IDM_COPY:
+        {
+            SendMessage(state.edit, WM_COPY, 0, 0);
+            break;
+        }
+
+        case IDM_SELECTALL:
+        {
+            Edit_SetSel(state.edit, 0, -1);
+            break;
+        }
+
         case IDM_EXIT:
         {
             DestroyWindow(state.window);
@@ -200,8 +212,10 @@ static int create_main_window(int show)
     state.edit = CreateWindowEx(WS_EX_CLIENTEDGE,
                                 L"EDIT",
                                 L"",
-                                WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | WS_CHILD |
-                                    ES_AUTOVSCROLL | ES_MULTILINE | ES_READONLY,
+                                WS_VISIBLE | WS_HSCROLL |
+                                    WS_VSCROLL | WS_CHILD |
+                                    ES_AUTOVSCROLL | ES_MULTILINE |
+                                    ES_READONLY | ES_NOHIDESEL,
                                 0, 0, client.right, client.bottom,
                                 state.window, NULL, state.instance, NULL);
     if (!state.edit)
