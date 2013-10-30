@@ -7,6 +7,7 @@
 #include <windowsx.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "diag.h"
 #include "resource.h"
@@ -25,10 +26,85 @@ static void error(void)
     exit(EXIT_FAILURE);
 }
 
+static char* utf8_from_utf16(const WCHAR* source)
+{
+    char* target;
+    int length;
+
+    length = WideCharToMultiByte(CP_UTF8, 0, source, -1, NULL, 0, NULL, NULL);
+    if (!length)
+        return NULL;
+
+    target = malloc(length + 1);
+
+    if (!WideCharToMultiByte(CP_UTF8, 0, source, -1, target, length + 1, NULL, NULL))
+    {
+        free(target);
+        return NULL;
+    }
+
+    return target;
+}
+
+static char* get_window_text_utf8(HWND window)
+{
+    char* text = NULL;
+    WCHAR* wideText;
+    size_t wideLength;
+
+    wideLength = GetWindowTextLength(window);
+    wideText = calloc(wideLength + 1, sizeof(WCHAR));
+
+    if (GetWindowText(window, wideText, wideLength + 1))
+        text = utf8_from_utf16(wideText);
+
+    free(wideText);
+    return text;
+}
+
 static void handle_menu_command(int command)
 {
     switch (command)
     {
+        case IDM_SAVEAS:
+        {
+            WCHAR path[MAX_PATH + 1];
+
+            OPENFILENAME ofn;
+            ZeroMemory(&ofn, sizeof(ofn));
+
+            ofn.lStructSize = sizeof(ofn);
+            ofn.hwndOwner = state.window;
+            ofn.hInstance = state.instance;
+            ofn.lpstrFilter = L"Text Files (*.txt)\0*.txt\0"
+                              L"All Files (*.*)\0*.*\0\0";
+            ofn.nFilterIndex = 1;
+            ofn.lpstrFile = path;
+            ofn.nMaxFile = sizeof(path) / sizeof(WCHAR);
+            ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+            ofn.lpstrDefExt = L"txt";
+
+            wcscpy(path, L"GLFWDIAG.txt");
+
+            if (GetSaveFileName(&ofn))
+            {
+                char* text = get_window_text_utf8(state.edit);
+                if (text)
+                {
+                    FILE* file = _wfopen(path, L"wb");
+                    if (file)
+                    {
+                        fwrite(text, 1, strlen(text), file);
+                        fclose(file);
+                    }
+
+                    free(text);
+                }
+            }
+
+            break;
+        }
+
         case IDM_EXIT:
         {
             DestroyWindow(state.window);
