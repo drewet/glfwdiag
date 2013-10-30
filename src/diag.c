@@ -37,8 +37,8 @@ char* analyze(void)
     if (!glfwInit())
         return NULL;
 
-    append_to_analysis("GLFWDIAG compiled on " __DATE__ "\n");
-    append_to_analysis("GLFW %s\n", glfwGetVersionString());
+    append_to_analysis("GLFWDIAG compiled on " __DATE__ "\r\n");
+    append_to_analysis("GLFW %s\r\n", glfwGetVersionString());
 
     monitors = glfwGetMonitors(&monitorCount);
     for (i = 0;  i < monitorCount;  i++)
@@ -46,12 +46,12 @@ char* analyze(void)
         int j, modeCount;
         const GLFWvidmode* modes;
 
-        append_to_analysis("Monitor %i (%s)\n", i, glfwGetMonitorName(monitors[i]));
+        append_to_analysis("Monitor %i (%s)\r\n", i, glfwGetMonitorName(monitors[i]));
 
         modes = glfwGetVideoModes(monitors[i], &modeCount);
         for (j = 0;  j < modeCount;  j++)
         {
-            append_to_analysis("%i: %i x %i, %i BPP (%i %i %i), %i Hz\n",
+            append_to_analysis("%i: %i x %i, %i BPP (%i %i %i), %i Hz\r\n",
                                j,
                                modes[j].width, modes[j].height,
                                modes[j].redBits + modes[j].greenBits + modes[j].blueBits,
@@ -69,13 +69,13 @@ char* analyze(void)
             glfwGetJoystickAxes(i, &axisCount);
             glfwGetJoystickButtons(i, &buttonCount);
 
-            append_to_analysis("Joystick %i (%s): %i axes, %i buttons\n",
+            append_to_analysis("Joystick %i (%s): %i axes, %i buttons\r\n",
                                i,
                                glfwGetJoystickName(i),
                                axisCount, buttonCount);
         }
         else
-            append_to_analysis("Joystick %i: not present\n", i);
+            append_to_analysis("Joystick %i: not present\r\n", i);
     }
 
     glfwTerminate();
