@@ -97,7 +97,8 @@ static void handle_menu_command(int command)
             ofn.hwndOwner = state.window;
             ofn.hInstance = state.instance;
             ofn.lpstrFilter = L"Text Files (*.txt)\0*.txt\0"
-                              L"All Files (*.*)\0*.*\0\0";
+                              L"All Files (*.*)\0*.*\0"
+                              L"\0";
             ofn.nFilterIndex = 1;
             ofn.lpstrFile = path;
             ofn.nMaxFile = sizeof(path) / sizeof(WCHAR);
