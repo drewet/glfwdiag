@@ -35,6 +35,11 @@ static void append_separator(void)
     append("\r\n");
 }
 
+static void error_callback(int error, const char* description)
+{
+    append("%s\r\n", description);
+}
+
 static const char* format_video_mode(const GLFWvidmode* mode)
 {
     static char buffer[512];
@@ -54,6 +59,8 @@ char* analyze(void)
 {
     int i, monitorCount;
     GLFWmonitor** monitors;
+
+    glfwSetErrorCallback(error_callback);
 
     if (!glfwInit())
         return NULL;
