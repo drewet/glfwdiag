@@ -26,6 +26,26 @@ static void error(void)
     exit(EXIT_FAILURE);
 }
 
+static WCHAR* utf16_from_utf8(const char* source)
+{
+    WCHAR* target;
+    int length;
+
+    length = MultiByteToWideChar(CP_UTF8, 0, source, -1, NULL, 0);
+    if (!length)
+        return NULL;
+
+    target = malloc(sizeof(WCHAR) * (length + 1));
+
+    if (!MultiByteToWideChar(CP_UTF8, 0, source, -1, target, length + 1))
+    {
+        free(target);
+        return NULL;
+    }
+
+    return target;
+}
+
 static char* utf8_from_utf16(const WCHAR* source)
 {
     char* target;
@@ -209,6 +229,7 @@ int APIENTRY WinMain(HINSTANCE instance,
                      int show)
 {
     MSG msg;
+    WCHAR* analysis;
 
     UNREFERENCED_PARAMETER(previous);
     UNREFERENCED_PARAMETER(commandLine);
@@ -222,7 +243,12 @@ int APIENTRY WinMain(HINSTANCE instance,
     if (!create_main_window(show))
         error();
 
-    SetWindowTextA(state.edit, analyze());
+    analysis = utf16_from_utf8(analyze());
+    if (!analysis)
+        error();
+
+    SetWindowText(state.edit, analysis);
+    free(analysis);
 
     for (;;)
     {
