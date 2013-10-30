@@ -12,6 +12,12 @@
 
 #define MAIN_WCL_NAME L"GLFWDIAG"
 
+static struct
+{
+    HWND window;
+    HWND edit;
+} state;
+
 static void error(void)
 {
     exit(EXIT_FAILURE);
@@ -39,6 +45,12 @@ static LRESULT CALLBACK main_window_proc(HWND window,
         case WM_COMMAND:
         {
             handle_menu_command(window, LOWORD(wParam));
+            return 0;
+        }
+
+        case WM_SIZE:
+        {
+            MoveWindow(state.edit, 0, 0, LOWORD(lParam), HIWORD(lParam), FALSE);
             return 0;
         }
 
@@ -71,19 +83,43 @@ static int register_main_class(HINSTANCE instance)
 
 static int create_main_window(HINSTANCE instance, int show)
 {
-    HWND window;
+    RECT client;
+    HFONT font;
 
-    window = CreateWindow(MAIN_WCL_NAME,
-                          L"GLFW Diagnostics Tool",
-                          WS_OVERLAPPEDWINDOW,
-                          CW_USEDEFAULT, 0,
-                          CW_USEDEFAULT, 0,
-                          NULL, NULL, instance, NULL);
-    if (!window)
+    state.window = CreateWindow(MAIN_WCL_NAME,
+                                L"GLFW Diagnostics Tool",
+                                WS_OVERLAPPEDWINDOW,
+                                CW_USEDEFAULT, 0,
+                                CW_USEDEFAULT, 0,
+                                NULL, NULL, instance, NULL);
+    if (!state.window)
         return FALSE;
 
-    ShowWindow(window, show);
-    UpdateWindow(window);
+    GetClientRect(state.window, &client);
+
+    state.edit = CreateWindow(L"EDIT",
+                              L"",
+                              WS_VISIBLE | WS_CHILD | ES_MULTILINE,
+                              0, 0, client.right, client.bottom,
+                              state.window, NULL, instance, NULL);
+    if (!state.edit)
+        return FALSE;
+
+    font = CreateFont(0, 0, 0, 0, FW_NORMAL,
+                      FALSE, FALSE, FALSE,
+                      DEFAULT_CHARSET,
+                      OUT_DEFAULT_PRECIS,
+                      CLIP_DEFAULT_PRECIS,
+                      CLEARTYPE_QUALITY,
+                      DEFAULT_PITCH,
+                      L"Courier New");
+    if (!font)
+        return FALSE;
+
+    SetWindowFont(state.edit, font, FALSE);
+
+    ShowWindow(state.window, show);
+    UpdateWindow(state.window);
 
     return TRUE;
 }
