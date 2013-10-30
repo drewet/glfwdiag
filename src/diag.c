@@ -17,7 +17,7 @@ static void append(const char* format, ...)
 
     va_start(vl, format);
     if (vsnprintf(buffer, sizeof(buffer), format, vl) < 0)
-    buffer[sizeof(buffer) - 1] = '\0';
+        buffer[sizeof(buffer) - 1] = '\0';
     va_end(vl);
 
     if (analysis)
@@ -80,10 +80,10 @@ char* analyze(void)
         glfwGetMonitorPhysicalSize(monitors[i], &widthMM, &heightMM);
 
         append_separator();
-        append("%s monitor %i (%s)\r\n",
-               primary ? "Primary" : "Secondary",
+        append("Monitor %i (%s) %s\r\n",
                i,
-               glfwGetMonitorName(monitors[i]));
+               glfwGetMonitorName(monitors[i]),
+               primary ? "primary" : "secondary");
 
         append("Current mode: %s\r\n", format_video_mode(mode));
         append("Virtual position: %i %i\r\n", xpos, ypos);
