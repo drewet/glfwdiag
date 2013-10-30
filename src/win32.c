@@ -99,7 +99,7 @@ static int create_main_window(HINSTANCE instance, int show)
 
     state.edit = CreateWindow(L"EDIT",
                               L"",
-                              WS_VISIBLE | WS_CHILD | ES_MULTILINE,
+                              WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | WS_CHILD | ES_AUTOVSCROLL | ES_MULTILINE,
                               0, 0, client.right, client.bottom,
                               state.window, NULL, instance, NULL);
     if (!state.edit)
@@ -117,6 +117,7 @@ static int create_main_window(HINSTANCE instance, int show)
         return FALSE;
 
     SetWindowFont(state.edit, font, FALSE);
+    Edit_LimitText(state.edit, 0);
 
     ShowWindow(state.window, show);
     UpdateWindow(state.window);
