@@ -184,22 +184,25 @@ static int create_main_window(int show)
     RECT client;
     HFONT font;
 
-    state.window = CreateWindow(MAIN_WCL_NAME,
-                                L"GLFW Diagnostics Tool",
-                                WS_OVERLAPPEDWINDOW,
-                                CW_USEDEFAULT, 0,
-                                CW_USEDEFAULT, 0,
-                                NULL, NULL, state.instance, NULL);
+    state.window = CreateWindowEx(WS_EX_APPWINDOW,
+                                  MAIN_WCL_NAME,
+                                  L"GLFW Diagnostics Tool",
+                                  WS_OVERLAPPEDWINDOW,
+                                  CW_USEDEFAULT, 0,
+                                  CW_USEDEFAULT, 0,
+                                  NULL, NULL, state.instance, NULL);
     if (!state.window)
         return FALSE;
 
     GetClientRect(state.window, &client);
 
-    state.edit = CreateWindow(L"EDIT",
-                              L"",
-                              WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | WS_CHILD | ES_AUTOVSCROLL | ES_MULTILINE,
-                              0, 0, client.right, client.bottom,
-                              state.window, NULL, state.instance, NULL);
+    state.edit = CreateWindowEx(WS_EX_CLIENTEDGE,
+                                L"EDIT",
+                                L"",
+                                WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | WS_CHILD |
+                                    ES_AUTOVSCROLL | ES_MULTILINE,
+                                0, 0, client.right, client.bottom,
+                                state.window, NULL, state.instance, NULL);
     if (!state.edit)
         return FALSE;
 
