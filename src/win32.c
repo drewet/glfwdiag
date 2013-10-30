@@ -15,6 +15,7 @@
 
 static struct
 {
+    HINSTANCE instance;
     HWND window;
     HWND edit;
 } state;
@@ -24,13 +25,13 @@ static void error(void)
     exit(EXIT_FAILURE);
 }
 
-static void handle_menu_command(HWND window, int command)
+static void handle_menu_command(int command)
 {
     switch (command)
     {
         case IDM_EXIT:
         {
-            DestroyWindow(window);
+            DestroyWindow(state.window);
             break;
         }
     }
@@ -45,7 +46,7 @@ static LRESULT CALLBACK main_window_proc(HWND window,
     {
         case WM_COMMAND:
         {
-            handle_menu_command(window, LOWORD(wParam));
+            handle_menu_command(LOWORD(wParam));
             return 0;
         }
 
@@ -65,15 +66,15 @@ static LRESULT CALLBACK main_window_proc(HWND window,
     return DefWindowProc(window, message, wParam, lParam);
 }
 
-static int register_main_class(HINSTANCE instance)
+static int register_main_class(void)
 {
     WNDCLASS wcl;
     ZeroMemory(&wcl, sizeof(wcl));
 
     wcl.style = CS_HREDRAW | CS_VREDRAW;
     wcl.lpfnWndProc = main_window_proc;
-    wcl.hInstance = instance;
-    wcl.hIcon = LoadIcon(instance, MAKEINTRESOURCE(IDI_GLFWDIAG));
+    wcl.hInstance = state.instance;
+    wcl.hIcon = LoadIcon(state.instance, MAKEINTRESOURCE(IDI_GLFWDIAG));
     wcl.hCursor = LoadCursor(NULL, IDC_ARROW);
     wcl.hbrBackground = (HBRUSH) (COLOR_WINDOW + 1);
     wcl.lpszMenuName = MAKEINTRESOURCE(IDC_MAIN);
@@ -82,7 +83,7 @@ static int register_main_class(HINSTANCE instance)
     return RegisterClass(&wcl);
 }
 
-static int create_main_window(HINSTANCE instance, int show)
+static int create_main_window(int show)
 {
     RECT client;
     HFONT font;
@@ -92,7 +93,7 @@ static int create_main_window(HINSTANCE instance, int show)
                                 WS_OVERLAPPEDWINDOW,
                                 CW_USEDEFAULT, 0,
                                 CW_USEDEFAULT, 0,
-                                NULL, NULL, instance, NULL);
+                                NULL, NULL, state.instance, NULL);
     if (!state.window)
         return FALSE;
 
@@ -102,7 +103,7 @@ static int create_main_window(HINSTANCE instance, int show)
                               L"",
                               WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | WS_CHILD | ES_AUTOVSCROLL | ES_MULTILINE,
                               0, 0, client.right, client.bottom,
-                              state.window, NULL, instance, NULL);
+                              state.window, NULL, state.instance, NULL);
     if (!state.edit)
         return FALSE;
 
@@ -136,10 +137,13 @@ int APIENTRY WinMain(HINSTANCE instance,
     UNREFERENCED_PARAMETER(previous);
     UNREFERENCED_PARAMETER(commandLine);
 
-    if (!register_main_class(instance))
+    ZeroMemory(&state, sizeof(state));
+    state.instance = instance;
+
+    if (!register_main_class())
         error();
 
-    if (!create_main_window(instance, show))
+    if (!create_main_window(show))
         error();
 
     SetWindowTextA(state.edit, analyze());
