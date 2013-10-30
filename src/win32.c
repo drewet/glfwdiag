@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 
+#include "diag.h"
 #include "resource.h"
 
 #define MAIN_WCL_NAME L"GLFWDIAG"
@@ -140,6 +141,8 @@ int APIENTRY WinMain(HINSTANCE instance,
 
     if (!create_main_window(instance, show))
         error();
+
+    SetWindowTextA(state.edit, analyze());
 
     for (;;)
     {
