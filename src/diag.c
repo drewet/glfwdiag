@@ -359,7 +359,7 @@ int test_default_window(void)
     {
         glClear(GL_COLOR_BUFFER_BIT);
         glfwSwapBuffers(window);
-        glfwPollEvents();
+        glfwWaitEvents();
     }
 
     glfwDestroyWindow(window);
