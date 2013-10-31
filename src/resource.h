@@ -8,4 +8,5 @@
 #define IDM_ABOUT           122
 #define IDM_COPY            123
 #define IDM_SELECTALL       124
+#define IDM_DEFAULTWINDOW   125
 

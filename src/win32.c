@@ -82,6 +82,18 @@ static char* get_window_text_utf8(HWND window)
     return text;
 }
 
+static void update_report(void)
+{
+    WCHAR* report;
+
+    report = utf16_from_utf8(get_report());
+    if (!report)
+        error();
+
+    SetWindowText(state.edit, report);
+    free(report);
+}
+
 static void handle_menu_command(int command)
 {
     switch (command)
@@ -135,6 +147,17 @@ static void handle_menu_command(int command)
         case IDM_SELECTALL:
         {
             Edit_SetSel(state.edit, 0, -1);
+            break;
+        }
+
+        case IDM_DEFAULTWINDOW:
+        {
+            ShowWindow(state.window, SW_HIDE);
+
+            test_default_window();
+            update_report();
+
+            ShowWindow(state.window, SW_SHOWNORMAL);
             break;
         }
 
@@ -247,7 +270,6 @@ int APIENTRY WinMain(HINSTANCE instance,
                      int show)
 {
     MSG msg;
-    WCHAR* analysis;
 
     UNREFERENCED_PARAMETER(previous);
     UNREFERENCED_PARAMETER(commandLine);
@@ -255,18 +277,18 @@ int APIENTRY WinMain(HINSTANCE instance,
     ZeroMemory(&state, sizeof(state));
     state.instance = instance;
 
+    if (!report_init())
+        error();
+
     if (!register_main_class())
         error();
 
     if (!create_main_window(show))
         error();
 
-    analysis = utf16_from_utf8(analyze());
-    if (!analysis)
-        error();
-
-    SetWindowText(state.edit, analysis);
-    free(analysis);
+    report_monitors();
+    report_joysticks();
+    update_report();
 
     for (;;)
     {
@@ -282,6 +304,7 @@ int APIENTRY WinMain(HINSTANCE instance,
         DispatchMessage(&msg);
     }
 
+    report_terminate();
     exit(EXIT_SUCCESS);
 }
 

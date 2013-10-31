@@ -9,6 +9,7 @@ set(GLFW_BUILD_TESTS OFF CACHE STRING "" FORCE)
 
 add_subdirectory(deps/glfw)
 include_directories(deps/glfw/include)
+include_directories(deps/glfw/deps)
 
 add_subdirectory(src)
 

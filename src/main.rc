@@ -17,6 +17,10 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Select &all",         IDM_SELECTALL
     END
+    POPUP "&Test"
+    BEGIN
+        MENUITEM "&Default window...",  IDM_DEFAULTWINDOW
+    END
     POPUP "&Help"
     BEGIN
         MENUITEM "&About...",           IDM_ABOUT

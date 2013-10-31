@@ -1,6 +1,8 @@
 
 #include <GLFW/glfw3.h>
 
+#include <GL/glext.h>
+
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -8,7 +10,16 @@
 
 #include "diag.h"
 
-static char* analysis = NULL;
+#define API_OPENGL          "gl"
+#define API_OPENGL_ES       "es"
+
+#define PROFILE_NAME_CORE   "core"
+#define PROFILE_NAME_COMPAT "compat"
+
+#define STRATEGY_NAME_NONE  "none"
+#define STRATEGY_NAME_LOSE  "lose"
+
+static char* report = NULL;
 
 static void append(const char* format, ...)
 {
@@ -20,14 +31,14 @@ static void append(const char* format, ...)
         buffer[sizeof(buffer) - 1] = '\0';
     va_end(vl);
 
-    if (analysis)
+    if (report)
     {
-        const size_t length = strlen(buffer) + strlen(analysis) + 1;
-        analysis = realloc(analysis, length);
-        strcat(analysis, buffer);
+        const size_t length = strlen(buffer) + strlen(report) + 1;
+        report = realloc(report, length);
+        strcat(report, buffer);
     }
     else
-        analysis = strdup(buffer);
+        report = strdup(buffer);
 }
 
 static void append_separator(void)
@@ -37,6 +48,7 @@ static void append_separator(void)
 
 static void error_callback(int error, const char* description)
 {
+    append_separator();
     append("%s\r\n", description);
 }
 
@@ -55,18 +67,78 @@ static const char* format_video_mode(const GLFWvidmode* mode)
     return buffer;
 }
 
-char* analyze(void)
+static const char* get_client_api_name(int api)
 {
-    int i, monitorCount;
-    GLFWmonitor** monitors;
+    if (api == GLFW_OPENGL_API)
+        return "OpenGL";
+    else if (api == GLFW_OPENGL_ES_API)
+        return "OpenGL ES";
 
+    return "Unknown API";
+}
+
+static const char* get_profile_name_gl(GLint mask)
+{
+    if (mask & GL_CONTEXT_COMPATIBILITY_PROFILE_BIT)
+        return PROFILE_NAME_COMPAT;
+    if (mask & GL_CONTEXT_CORE_PROFILE_BIT)
+        return PROFILE_NAME_CORE;
+
+    return "unknown";
+}
+
+static const char* get_profile_name_glfw(int profile)
+{
+    if (profile == GLFW_OPENGL_COMPAT_PROFILE)
+        return PROFILE_NAME_COMPAT;
+    if (profile == GLFW_OPENGL_CORE_PROFILE)
+        return PROFILE_NAME_CORE;
+
+    return "unknown";
+}
+
+static const char* get_strategy_name_gl(GLint strategy)
+{
+    if (strategy == GL_LOSE_CONTEXT_ON_RESET_ARB)
+        return STRATEGY_NAME_LOSE;
+    if (strategy == GL_NO_RESET_NOTIFICATION_ARB)
+        return STRATEGY_NAME_NONE;
+
+    return "unknown";
+}
+
+static const char* get_strategy_name_glfw(int strategy)
+{
+    if (strategy == GLFW_LOSE_CONTEXT_ON_RESET)
+        return STRATEGY_NAME_LOSE;
+    if (strategy == GLFW_NO_RESET_NOTIFICATION)
+        return STRATEGY_NAME_NONE;
+
+    return "unknown";
+}
+
+int report_init(void)
+{
     glfwSetErrorCallback(error_callback);
 
     if (!glfwInit())
-        return NULL;
+        return 0;
 
     append("GLFWDIAG compiled on " __DATE__ "\r\n");
     append("GLFW %s\r\n", glfwGetVersionString());
+
+    return 1;
+}
+
+void report_terminate(void)
+{
+    glfwTerminate();
+}
+
+void report_monitors(void)
+{
+    int i, monitorCount;
+    GLFWmonitor** monitors;
 
     monitors = glfwGetMonitors(&monitorCount);
     for (i = 0;  i < monitorCount;  i++)
@@ -96,6 +168,11 @@ char* analyze(void)
         for (j = 0;  j < modeCount;  j++)
             append("%4i: %s\r\n", j, format_video_mode(modes + j));
     }
+}
+
+void report_joysticks(void)
+{
+    int i;
 
     append_separator();
 
@@ -116,8 +193,176 @@ char* analyze(void)
         else
             append("Joystick %i: not present\r\n", i);
     }
+}
 
-    glfwTerminate();
-    return analysis;
+void report_context(void)
+{
+    GLFWwindow* window = glfwGetCurrentContext();
+    const int api = glfwGetWindowAttrib(window, GLFW_CLIENT_API);
+    const int major = glfwGetWindowAttrib(window, GLFW_CONTEXT_VERSION_MAJOR);
+    const int minor = glfwGetWindowAttrib(window, GLFW_CONTEXT_VERSION_MINOR);
+    const int rev = glfwGetWindowAttrib(window, GLFW_CONTEXT_REVISION);
+
+    append_separator();
+    append("%s context version string: \"%s\"\r\n",
+           get_client_api_name(api),
+           glGetString(GL_VERSION));
+    append("%s context version parsed by GLFW: %u.%u.%u\r\n",
+           get_client_api_name(api),
+           major, minor, rev);
+
+    if (api == GLFW_OPENGL_API)
+    {
+        if (major >= 3)
+        {
+            GLint flags;
+            glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+            append("%s context flags (0x%08x):", get_client_api_name(api), flags);
+
+            if (flags & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT)
+                append(" forward-compatible");
+            if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+                append(" debug");
+            if (flags & GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT_ARB)
+                append(" robustness");
+            append("\n");
+
+            append("%s context flags parsed by GLFW:", get_client_api_name(api));
+
+            if (glfwGetWindowAttrib(window, GLFW_OPENGL_FORWARD_COMPAT))
+                printf(" forward-compatible");
+            if (glfwGetWindowAttrib(window, GLFW_OPENGL_DEBUG_CONTEXT))
+                printf(" debug");
+            if (glfwGetWindowAttrib(window, GLFW_CONTEXT_ROBUSTNESS) != GLFW_NO_ROBUSTNESS)
+                printf(" robustness");
+            append("\r\n");
+        }
+
+        if (major > 3 || (major == 3 && minor >= 2))
+        {
+            GLint mask;
+            int profile = glfwGetWindowAttrib(window, GLFW_OPENGL_PROFILE);
+
+            glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &mask);
+            append("%s profile mask (0x%08x): %s\n",
+                   get_client_api_name(api),
+                   mask,
+                   get_profile_name_gl(mask));
+
+            append("%s profile mask parsed by GLFW: %s\n",
+                   get_client_api_name(api),
+                   get_profile_name_glfw(profile));
+        }
+
+        if (glfwExtensionSupported("GL_ARB_robustness"))
+        {
+            int robustness;
+            GLint strategy;
+            glGetIntegerv(GL_RESET_NOTIFICATION_STRATEGY_ARB, &strategy);
+
+            append("%s robustness strategy (0x%08x): %s\n",
+                   get_client_api_name(api),
+                   strategy,
+                   get_strategy_name_gl(strategy));
+
+            robustness = glfwGetWindowAttrib(window, GLFW_CONTEXT_ROBUSTNESS);
+
+            append("%s robustness strategy parsed by GLFW: %s\n",
+                   get_client_api_name(api),
+                   get_strategy_name_glfw(robustness));
+        }
+    }
+
+    append("%s context renderer string: \"%s\"\n",
+           get_client_api_name(api),
+           glGetString(GL_RENDERER));
+    append("%s context vendor string: \"%s\"\n",
+           get_client_api_name(api),
+           glGetString(GL_VENDOR));
+
+    if (major > 1)
+    {
+        append("%s context shading language version: \"%s\"\n",
+               get_client_api_name(api),
+               glGetString(GL_SHADING_LANGUAGE_VERSION));
+    }
+}
+
+void report_extensions(void)
+{
+    int i;
+    GLint count;
+    const GLubyte* extensions;
+    GLFWwindow* window = glfwGetCurrentContext();
+
+    append_separator();
+    append("%s context supported extensions:\r\n",
+           get_client_api_name(glfwGetWindowAttrib(window, GLFW_CLIENT_API)));
+
+    if (glfwGetWindowAttrib(window, GLFW_CONTEXT_VERSION_MAJOR) > 2)
+    {
+        PFNGLGETSTRINGIPROC glGetStringi =
+            (PFNGLGETSTRINGIPROC) glfwGetProcAddress("glGetStringi");
+        if (!glGetStringi)
+        {
+            glfwTerminate();
+            exit(EXIT_FAILURE);
+        }
+
+        glGetIntegerv(GL_NUM_EXTENSIONS, &count);
+
+        for (i = 0;  i < count;  i++)
+            append("%s\r\n", glGetStringi(GL_EXTENSIONS, i));
+    }
+    else
+    {
+        extensions = glGetString(GL_EXTENSIONS);
+        while (*extensions != '\0')
+        {
+            if (*extensions == ' ')
+                append("\r\n");
+            else
+                append("%c", *extensions);
+
+            extensions++;
+        }
+    }
+}
+
+char* get_report(void)
+{
+    return report;
+}
+
+int test_default_window(void)
+{
+    GLFWwindow* window;
+    double base;
+
+    append_separator();
+    append("Creating a default window\r\n");
+
+    glfwDefaultWindowHints();
+    window = glfwCreateWindow(640, 480, "Window Title", NULL, NULL);
+    if (!window)
+        return 0;
+
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
+
+    report_context();
+    report_extensions();
+
+    base = glfwGetTime();
+
+    while (!glfwWindowShouldClose(window))
+    {
+        glClear(GL_COLOR_BUFFER_BIT);
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glfwDestroyWindow(window);
+    return 1;
 }
 
