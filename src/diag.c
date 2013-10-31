@@ -225,7 +225,7 @@ void report_context(void)
                 append(" debug");
             if (flags & GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT_ARB)
                 append(" robustness");
-            append("\n");
+            append("\r\n");
 
             append("%s context flags parsed by GLFW:", get_client_api_name(api));
 
@@ -244,12 +244,12 @@ void report_context(void)
             int profile = glfwGetWindowAttrib(window, GLFW_OPENGL_PROFILE);
 
             glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &mask);
-            append("%s profile mask (0x%08x): %s\n",
+            append("%s profile mask (0x%08x): %s\r\n",
                    get_client_api_name(api),
                    mask,
                    get_profile_name_gl(mask));
 
-            append("%s profile mask parsed by GLFW: %s\n",
+            append("%s profile mask parsed by GLFW: %s\r\n",
                    get_client_api_name(api),
                    get_profile_name_glfw(profile));
         }
@@ -260,29 +260,29 @@ void report_context(void)
             GLint strategy;
             glGetIntegerv(GL_RESET_NOTIFICATION_STRATEGY_ARB, &strategy);
 
-            append("%s robustness strategy (0x%08x): %s\n",
+            append("%s robustness strategy (0x%08x): %s\r\n",
                    get_client_api_name(api),
                    strategy,
                    get_strategy_name_gl(strategy));
 
             robustness = glfwGetWindowAttrib(window, GLFW_CONTEXT_ROBUSTNESS);
 
-            append("%s robustness strategy parsed by GLFW: %s\n",
+            append("%s robustness strategy parsed by GLFW: %s\r\n",
                    get_client_api_name(api),
                    get_strategy_name_glfw(robustness));
         }
     }
 
-    append("%s context renderer string: \"%s\"\n",
+    append("%s context renderer string: \"%s\"\r\n",
            get_client_api_name(api),
            glGetString(GL_RENDERER));
-    append("%s context vendor string: \"%s\"\n",
+    append("%s context vendor string: \"%s\"\r\n",
            get_client_api_name(api),
            glGetString(GL_VENDOR));
 
     if (major > 1)
     {
-        append("%s context shading language version: \"%s\"\n",
+        append("%s context shading language version: \"%s\"\r\n",
                get_client_api_name(api),
                glGetString(GL_SHADING_LANGUAGE_VERSION));
     }
