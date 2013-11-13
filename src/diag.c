@@ -343,17 +343,20 @@ int test_default_window(void)
     append("Creating a default window\r\n");
 
     glfwDefaultWindowHints();
+
+    base = glfwGetTime();
+
     window = glfwCreateWindow(640, 480, "Window Title", NULL, NULL);
     if (!window)
         return 0;
+
+    append("Creating the window took %0.3f seconds\r\n", glfwGetTime() - base);
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
     report_context();
     report_extensions();
-
-    base = glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
